@@ -9,6 +9,14 @@ SECTIONS
 {
   *(.text)
 }
+.data : 
+{
+  *(.data)
+}
+.rodata :
+{
+  *(.rodata*)
+}
 
 . = ALIGN(16);
 stack_bottom = .;
