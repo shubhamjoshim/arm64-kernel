@@ -9,6 +9,13 @@ SECTIONS
 {
   *(.text)
 }
+
+. = ALIGN(2048);
+.vectors : 
+{
+  *(.vectors)
+}
+
 .data : 
 {
   *(.data)
