@@ -1,4 +1,5 @@
 #include "uart.h"
+#include "kprintf.h"
 #include <stdint.h>
 uint64_t get_current_el(void);
 
@@ -31,6 +32,8 @@ void exception_handler(uint64_t elr, uint64_t esr){
 void kernel_main(void)
 {
     uart_put_string("UART console ready\n");
+    char *s="Kernel";
+    kprintf("hello trying kprintf out number: %d, hex %x, string: %s\n",3,(uint64_t)3,s);
 
     uint64_t el=get_current_el();
     uart_put_string("Current EL: ");
