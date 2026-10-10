@@ -3,6 +3,7 @@
 #include <stdint.h>
 uint64_t get_current_el(void);
 
+
 struct exception_frame {
     uint64_t x0;
     uint64_t x1;
@@ -41,6 +42,19 @@ struct exception_frame {
     uint64_t esr;
 };
 
+
+void kernel_panic(const char *reason, struct exception_frame *frame){
+    kprintf("\n========== KERNEL PANIC ==========\n");
+    kprintf("Reason: %s\n", reason);
+    kprintf("ELR_EL1:  0x%x\n", frame->elr);
+    kprintf("ESR_EL1:  0x%x\n", frame->esr);
+    kprintf("SPSR_EL1: 0x%x\n", frame->spsr);
+    kprintf("==================================\n");
+    while (1) {
+
+    }
+
+}
 void exception_handler(struct exception_frame *frame){ // elr tells us where the exception happened; esr tells us why it happened, both values are hex
                                                     
   uint64_t elr = frame -> elr;
@@ -57,6 +71,9 @@ void exception_handler(struct exception_frame *frame){ // elr tells us where the
     uint64_t comment = (esr) & (0xFFFF); //value of BRK is stored in first sixteen bits of esr
     kprintf("BRK value: %d\n",(int)comment);
     frame->elr += 4;
+  }
+  else{
+    kernel_panic("Unhandled exception", frame);
   }
 
 }

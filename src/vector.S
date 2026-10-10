@@ -187,4 +187,3 @@ unexpected_exception:
     eret
 
 
-    b .
