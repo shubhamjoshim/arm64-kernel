@@ -1,6 +1,12 @@
 #include "uart.h"
 #include "kprintf.h"
 #include <stdint.h>
+#define ESR_EC_SHIFT 26U
+#define MASK 0x3FU
+#define EC_BRK_AARCH64 0x3CU
+#define EC_INSTR_ABORT_SAME_EL 0x21U
+#define EC_DATA_ABORT_SAME_EL 0x25U
+
 uint64_t get_current_el(void);
 
 
@@ -55,6 +61,13 @@ void kernel_panic(const char *reason, struct exception_frame *frame){
     }
 
 }
+static uint64_t read_far_el1(void){
+  uint64_t far;
+
+  __asm__ volatile("mrs %0, FAR_EL1": "=r"(far));
+
+  return far;
+}
 void exception_handler(struct exception_frame *frame){ // elr tells us where the exception happened; esr tells us why it happened, both values are hex
                                                     
   uint64_t elr = frame -> elr;
@@ -62,15 +75,30 @@ void exception_handler(struct exception_frame *frame){ // elr tells us where the
   kprintf("EXCEPTION: \nELR_E1: 0x%x\n",elr);
   kprintf("ESR_E1: 0x%x\n",esr);
 
-  uint64_t ec = (esr >> 26) & (0x3F); //the type of exception lives in the [31:26] bits so we right shift by 26 so that the first 6 bits are these ones. Masking with 0x3F 
+  uint64_t ec = (esr >> ESR_EC_SHIFT) & (MASK); //the type of exception lives in the [31:26] bits so we right shift by 26 so that the first 6 bits are these ones. Masking with 0x3F 
                                      //helps us to get to know exactly which bit of the six were 1, i.e which type of exception
   kprintf("Exception class: 0x%x\n",ec);
   
-  if(ec == 0x3C){
+  if(ec == EC_BRK_AARCH64){
     uart_put_string("TYPE: BRK\n");
     uint64_t comment = (esr) & (0xFFFF); //value of BRK is stored in first sixteen bits of esr
     kprintf("BRK value: %d\n",(int)comment);
     frame->elr += 4;
+  }
+  else if(ec == EC_DATA_ABORT_SAME_EL){
+    uint64_t far = read_far_el1();
+
+    kprintf("Data Abort\n");
+    kprintf("Fault Address: 0x%x\n",far);
+
+    kernel_panic("Data Abort", frame);
+  }
+  else if(ec == EC_INSTR_ABORT_SAME_EL){
+    uint64_t far = read_far_el1();
+
+    kprintf("Instruction Abort\n");
+    kprintf("Fault Address: 0x%x\n",far);
+    kernel_panic("Instruction Abort", frame);
   }
   else{
     kernel_panic("Unhandled exception", frame);
