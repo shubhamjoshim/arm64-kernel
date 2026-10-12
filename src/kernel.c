@@ -1,5 +1,6 @@
 #include "uart.h"
 #include "kprintf.h"
+#include "timer.h"
 #include <stdint.h>
 #define ESR_EC_SHIFT 26U
 #define MASK 0x3FU
@@ -116,6 +117,8 @@ void kernel_main(void)
     uart_put_string("Before Exception\n");
     __asm__ volatile ("brk #0"); //intentionally invoking a syn spx error
     uart_put_string("After Exception\n"); //should print this if exception handling is successful
+    uint64_t freq=timer_get_frequency();
+    kprintf("Timer frequency: %d",(int) freq);
     while (1) {
     }
 }
