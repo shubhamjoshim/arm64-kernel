@@ -3,8 +3,8 @@
 
 .global exception_vectors
 
-exception_vectors:
-  b vector_sync_sp0
+exception_vectors: //declaring exception vectors according to arm64 rules 
+  b vector_sync_sp0 //each entry in the vector table is given 128 bytes
   .space 124
 
   b vector_irq_sp0
@@ -100,7 +100,7 @@ vector_fiq_lower_aarch32:
 vector_serror_lower_aarch32:
     b unexpected_exception
 
-unexpected_exception:
+unexpected_exception: //creating the actual space by moving the general stack and storing the registers while handling is taking place
     sub sp,sp,#272 
     str x0,  [sp, #0]
     str x1,  [sp, #8]
@@ -134,7 +134,7 @@ unexpected_exception:
     str x29, [sp, #232]
     str x30, [sp, #240]
 
-    mrs x0, ELR_EL1
+    mrs x0, ELR_EL1 //same for system registers too
     str x0,[sp,#248]
     mrs x1, SPSR_EL1
     str x1,[sp, #256] 
@@ -149,7 +149,6 @@ unexpected_exception:
 
     ldr x0,[sp,#256]
     msr SPSR_EL1,x0
-
     ldr x0,  [sp, #0]
     ldr x1,  [sp, #8]
     ldr x2,  [sp, #16]
@@ -182,8 +181,8 @@ unexpected_exception:
     ldr x29, [sp, #232]
     ldr x30, [sp, #240]
 
-    add sp,sp,#272
+    add sp,sp,#272 //free up the stack
 
-    eret
+    eret //exception handling is done, control is given back to boot.S/kerner.c
 
 

@@ -85,7 +85,7 @@ void exception_handler(struct exception_frame *frame){ // elr tells us where the
     kprintf("BRK value: %d\n",(int)comment);
     frame->elr += 4;
   }
-  else if(ec == EC_DATA_ABORT_SAME_EL){
+  else if(ec == EC_DATA_ABORT_SAME_EL){ // anyother unhandled exception
     uint64_t far = read_far_el1();
 
     kprintf("Data Abort\n");
@@ -115,7 +115,7 @@ void kernel_main(void)
 
     uart_put_string("Before Exception\n");
     __asm__ volatile ("brk #0"); //intentionally invoking a syn spx error
-    uart_put_string("After Exception\n");
+    uart_put_string("After Exception\n"); //should print this if exception handling is successful
     while (1) {
     }
 }
