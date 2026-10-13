@@ -1,3 +1,4 @@
+#include "gic.h"
 #include "uart.h"
 #include "kprintf.h"
 #include "timer.h"
@@ -69,6 +70,18 @@ static uint64_t read_far_el1(void){
 
   return far;
 }
+void irq_handler(struct exception_frame *frame){
+  (void) frame;
+
+  uint32_t iar = gic_acknowledge_irq();
+  uint32_t id = gic_get_irq_id(iar);
+
+  if(id == 30U){
+    timer_disable();
+    kprintf("TIMER IRQ\n");
+  }
+  gic_end_irq(iar);
+}
 void exception_handler(struct exception_frame *frame){ // elr tells us where the exception happened; esr tells us why it happened, both values are hex
                                                     
   uint64_t elr = frame -> elr;
@@ -118,7 +131,13 @@ void kernel_main(void)
     __asm__ volatile ("brk #0"); //intentionally invoking a syn spx error
     uart_put_string("After Exception\n"); //should print this if exception handling is successful
     uint64_t freq=timer_get_frequency();
-    kprintf("Timer frequency: %d",(int) freq);
+    kprintf("Timer frequency: %d\n",(int) freq);
+    gic_enable_timer_irq();
+
+    timer_set_ticks(freq);
+    timer_enable();
+    kprintf("Waiting for irq\n");
+    __asm__ volatile("msr DAIFClr, #2");
     while (1) {
     }
 }

@@ -21,6 +21,10 @@ timer_enable:
 // bit 2 ISTATUS     -> hardware timer status
   mov x0, #1
   msr CNTP_CTL_EL0, x0
-  mov x0,#1
-  msr CNTP_CTL_EL0,x0
+  ret
+
+.global timer_disable
+timer_disable:
+  mov x0,#0
+  msr CNTP_CTL_EL0, x0
   ret

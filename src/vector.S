@@ -188,10 +188,13 @@ sync_exception:
     mov x0,sp //move the value of sp to x0 cuz c expects it's arguments starting from x0
     bl exception_handler
     RESTORE_CONTEXT
-    
     eret //exception handling is done, control is given back to boot.S/kerner.c
 irq_exception:
-  b .
+  SAVE_CONTEXT
+  mov x0, sp
+  bl irq_handler
+  RESTORE_CONTEXT
+  eret
 unexpected_exception:
   b .
 

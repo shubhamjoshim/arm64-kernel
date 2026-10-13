@@ -20,8 +20,8 @@ build/uart.o: src/uart.c src/uart.h
 build/kprintf.o: src/kprintf.c src/kprintf.h src/uart.h
 	aarch64-elf-gcc -ffreestanding -mgeneral-regs-only -Wall -Wextra -Wpedantic -c src/kprintf.c -o build/kprintf.o
 
-build/kernel.elf: build/boot.o build/vector.o build/timer.o build/kernel.o build/uart.o build/kprintf.o build/gic.o linker.ld
-	aarch64-elf-ld -T linker.ld build/boot.o build/vector.o build/timer.o build/kernel.o build/uart.o build/kprintf.o -o build/kernel.elf
+build/kernel.elf: build/boot.o build/vector.o build/timer.o build/kernel.o build/gic.o build/uart.o build/kprintf.o build/gic.o linker.ld
+	aarch64-elf-ld -T linker.ld build/boot.o build/vector.o build/timer.o build/kernel.o build/gic.o build/uart.o build/kprintf.o -o build/kernel.elf
 
 run: build/kernel.elf
 	qemu-system-aarch64 -machine virt -cpu cortex-a53 -nographic -kernel build/kernel.elf

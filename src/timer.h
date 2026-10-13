@@ -5,5 +5,6 @@
 uint64_t timer_get_frequency(void);
 void timer_set_ticks(uint64_t ticks);
 void timer_enable(void);
+void timer_disable(void);
 
 #endif
