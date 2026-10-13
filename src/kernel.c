@@ -77,7 +77,8 @@ void irq_handler(struct exception_frame *frame){
   uint32_t id = gic_get_irq_id(iar);
 
   if(id == 30U){
-    timer_disable();
+    uint32_t freq = timer_get_frequency();
+    timer_set_ticks(freq);
     kprintf("TIMER IRQ\n");
   }
   gic_end_irq(iar);
