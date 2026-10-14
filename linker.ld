@@ -29,4 +29,15 @@ SECTIONS
 stack_bottom = .;
 . += 0x4000;
 stack_top = .;
+kernel_end = .;
+
+.bss :
+{
+    bss_start = .;
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    bss_end = .;
 }
+}
+
