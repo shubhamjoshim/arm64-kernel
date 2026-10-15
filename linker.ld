@@ -24,13 +24,6 @@ SECTIONS
 {
   *(.rodata*)
 }
-
-. = ALIGN(16);
-stack_bottom = .;
-. += 0x4000;
-stack_top = .;
-kernel_end = .;
-
 .bss :
 {
     bss_start = .;
@@ -39,5 +32,12 @@ kernel_end = .;
     *(COMMON)
     bss_end = .;
 }
+. = ALIGN(16);
+stack_bottom = .;
+. += 0x4000;
+stack_top = .;
+kernel_end = .;
+
+
 }
 

@@ -130,9 +130,8 @@ void kernel_main(void)
     kprintf("Current EL: %d\n",(int)el);
 
    pmm_init();
-
-   uintptr_t first_page = align_up ();
-   kprintf("First page address: %x\n",first_page);
+   uint64_t first = pmm_allocate_page();
+   kprintf("First page address: %x\n",first);
    uintptr_t second = pmm_allocate_page();
    uintptr_t third = pmm_allocate_page();
    kprintf("second page: %x\n",second);
