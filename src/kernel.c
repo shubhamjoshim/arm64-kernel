@@ -1,4 +1,5 @@
 #include "gic.h"
+#include "pmm.h"
 #include "uart.h"
 #include "kprintf.h"
 #include "timer.h"
@@ -128,17 +129,18 @@ void kernel_main(void)
     uint64_t el=get_current_el(); //gets the current EL level from boot.S
     kprintf("Current EL: %d\n",(int)el);
 
-    uart_put_string("Before Exception\n");
-    __asm__ volatile ("brk #0"); //intentionally invoking a syn spx error
-    uart_put_string("After Exception\n"); //should print this if exception handling is successful
-    uint64_t freq=timer_get_frequency();
-    kprintf("Timer frequency: %d\n",(int) freq);
-    gic_enable_timer_irq();
+   pmm_init();
 
-    timer_set_ticks(freq);
-    timer_enable();
-    kprintf("Waiting for irq\n");
-    __asm__ volatile("msr DAIFClr, #2");
+   uintptr_t first_page = align_up ();
+   kprintf("First page address: %x\n",first_page);
+   uintptr_t second = pmm_allocate_page();
+   uintptr_t third = pmm_allocate_page();
+   kprintf("second page: %x\n",second);
+   kprintf("Third page: %x\n",third);
+  volatile uint64_t *ptr = (uint64_t*) third;
+   *ptr = 0x123;
+   kprintf("value stored at third page: %x\n",*ptr);
+
     while (1) {
     }
 }
