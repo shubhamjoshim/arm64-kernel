@@ -129,16 +129,17 @@ void kernel_main(void)
     uint64_t el=get_current_el(); //gets the current EL level from boot.S
     kprintf("Current EL: %d\n",(int)el);
 
-   pmm_init();
-   uint64_t first = pmm_allocate_page();
-   kprintf("First page address: %x\n",first);
-   uintptr_t second = pmm_allocate_page();
-   uintptr_t third = pmm_allocate_page();
-   kprintf("second page: %x\n",second);
-   kprintf("Third page: %x\n",third);
-  volatile uint64_t *ptr = (uint64_t*) third;
-   *ptr = 0x123;
-   kprintf("value stored at third page: %x\n",*ptr);
+    pmm_init();
+    uintptr_t a= pmm_allocate_page(); 
+    uintptr_t b = pmm_allocate_page();
+    uintptr_t c = pmm_allocate_page();
+    kprintf("Adress of B: %x\n",b);
+    pmm_free_page(b);
+    pmm_free_page(b);
+    uintptr_t d = pmm_allocate_page();
+    uintptr_t e = pmm_allocate_page();
+    kprintf("address of D: %x\n",d);
+    kprintf("address of e = %x\n",e);
 
     while (1) {
     }

@@ -8,3 +8,5 @@ build/
 a.out
 a.out
 test.S
+docs/
+.obsidian/

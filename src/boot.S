@@ -4,12 +4,14 @@ _start:
   msr SPSel, #1
   ldr x0, =stack_top
   mov sp, x0
-  bl set_bss
+  bl set_bss //initilized bss so that we can use static/global variables
   ldr x0,=exception_vectors
   msr VBAR_EL1,x0
   isb //make sure the cpu recognises the register before continuing 
   bl kernel_main
   b .
+
+
 
 
 .global get_current_el  
