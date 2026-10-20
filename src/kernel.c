@@ -1,4 +1,5 @@
 #include "gic.h"
+#include "vmm.h"
 #include "pmm.h"
 #include "uart.h"
 #include "kprintf.h"
@@ -10,6 +11,7 @@
 #define EC_INSTR_ABORT_SAME_EL 0x21U
 #define EC_DATA_ABORT_SAME_EL 0x25U
 
+extern uint64_t read_mair(void);
 uint64_t get_current_el(void);
 
 
@@ -140,7 +142,9 @@ void kernel_main(void)
     uintptr_t e = pmm_allocate_page();
     kprintf("address of D: %x\n",d);
     kprintf("address of e = %x\n",e);
-
+    
+    vmm_init();
+    uint64_t value = read_mair();
     while (1) {
     }
 }
