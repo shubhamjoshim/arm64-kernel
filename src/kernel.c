@@ -144,6 +144,7 @@ void kernel_main(void)
     kprintf("address of e = %x\n",e);
     
     vmm_init();
+    vmm_test_device_mapping();
     uint64_t value = read_mair();
     while (1) {
     }

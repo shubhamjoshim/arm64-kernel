@@ -33,7 +33,7 @@ void pmm_free_page(uintptr_t page){
 
 uintptr_t align_up(uintptr_t address){
   uintptr_t next;
-  next = ( address + PAGE_SIZE -1) & ~(PAGE_SIZE - 1);
+  next = (address + PAGE_SIZE -1) & ~(PAGE_SIZE - 1);
   return next;
 }
 

@@ -1,15 +1,13 @@
+
 #include "pmm.h"
 #include "kprintf.h"
+#include <stddef.h>
 #include <stdint.h>
+
+#define NORMAL_FLAGS  0x703ULL
+#define DEVICE_FLAGS 0x407ULL
 static uintptr_t page_table_l0;
 static uint64_t *l0;
-static uintptr_t page_table_l1;
-static uint64_t *l1;
-static uintptr_t page_table_l2;
-static uint64_t *l2;
-static uintptr_t page_table_l3;
-static uint64_t *l3;
-
 extern void setup_mair(void);
 extern uint64_t read_mair(void);
 
@@ -34,29 +32,6 @@ void vmm_init(){
    if(page_table_l0 == 0) return;
    l0 = (uint64_t *) page_table_l0;
    set_zero(page_table_l0);
-
-   page_table_l1 = pmm_allocate_page();
-   if(page_table_l1 == 0) return;
-   set_zero(page_table_l1);
-   l1 = (uint64_t *) page_table_l1;
-
-   l0[0] = page_table_l1 | 0x3ULL;
-
-   page_table_l2 = pmm_allocate_page();
-   if(page_table_l2 == 0) return;
-   set_zero(page_table_l2);
-   l2 = (uint64_t *) page_table_l2;
-
-   l1[0] = page_table_l2 | 0x3ULL;
-
-
-   page_table_l3 = pmm_allocate_page();
-   if(page_table_l3 == 0) return;
-   set_zero(page_table_l3);
-   l3 = (uint64_t *) page_table_l3;
-
-   l2[0] = page_table_l3 | 0x3ULL;
-
    setup_mair();
 }
 
@@ -93,7 +68,7 @@ void remove_descriptor_bits(uintptr_t *entry){
   *entry = *entry & (~0xFFFULL);
   return;
 }
-void map_page(uintptr_t va, uintptr_t pa){
+void map_page(uintptr_t va, uintptr_t pa, uint64_t flags){
 
   if((pa & 0xFFFULL) != 0) return;
   if((va & 0xFFFULL) != 0) return;
@@ -133,8 +108,52 @@ void map_page(uintptr_t va, uintptr_t pa){
 
   uint64_t l3_index = extract_l3(va);
 
-  uint64_t flags = (1ULL << 0) | (1ULL << 1) | (3ULL << 8) | (1ULL << 10);
 
   current_l3[l3_index] = (uint64_t)pa | flags;
 }
 
+void map_region(uintptr_t va, uintptr_t pa, size_t size, uint64_t flags){
+  if((pa & 0xFFFULL) != 0) return;
+  if((va & 0xFFFULL) != 0) return;
+  if(size == 0) return;
+  size = (size_t) align_up((uintptr_t)size);
+
+  while(size > 0){
+
+    kprintf("region: va=%x pa=%x size=%x\n",
+        va, pa, (uint64_t)size);
+    map_page(va, pa,flags);
+
+    va += 0x1000;
+    pa += 0x1000;
+    size -= 0x1000;
+  }
+
+}
+
+
+void vmm_test_device_mapping(void)
+{
+    uintptr_t va = 0x60000000ULL;
+    uintptr_t pa = 0x09000000ULL;   /* UART physical address */
+
+    map_page(va, pa, DEVICE_FLAGS);
+
+    uint64_t e0 = l0[extract_l0(va)];
+    uint64_t *t1 = (uint64_t *)(e0 & ~0xFFFULL);
+
+    uint64_t e1 = t1[extract_l1(va)];
+    uint64_t *t2 = (uint64_t *)(e1 & ~0xFFFULL);
+
+    uint64_t e2 = t2[extract_l2(va)];
+    uint64_t *t3 = (uint64_t *)(e2 & ~0xFFFULL);
+
+    uint64_t e3 = t3[extract_l3(va)];
+
+    kprintf("Device L3: %x\n", e3);
+
+    if (e3 == (pa | DEVICE_FLAGS))
+        kprintf("DEVICE MAPPING TEST PASSED\n");
+    else
+        kprintf("DEVICE MAPPING TEST FAILED\n");
+}
