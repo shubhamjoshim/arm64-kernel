@@ -11,8 +11,10 @@
 #define EC_INSTR_ABORT_SAME_EL 0x21U
 #define EC_DATA_ABORT_SAME_EL 0x25U
 
-extern uint64_t read_mair(void);
 uint64_t get_current_el(void);
+
+volatile uint64_t timer_test_count = 0;
+
 
 
 struct exception_frame {
@@ -75,11 +77,11 @@ static uint64_t read_far_el1(void){
 }
 void irq_handler(struct exception_frame *frame){
   (void) frame;
-
   uint32_t iar = gic_acknowledge_irq();
   uint32_t id = gic_get_irq_id(iar);
 
   if(id == 30U){
+    timer_test_count++;
     uint32_t freq = timer_get_frequency();
     timer_set_ticks(freq);
     kprintf("TIMER IRQ\n");
@@ -132,20 +134,8 @@ void kernel_main(void)
     kprintf("Current EL: %d\n",(int)el);
 
     pmm_init();
-    uintptr_t a= pmm_allocate_page(); 
-    uintptr_t b = pmm_allocate_page();
-    uintptr_t c = pmm_allocate_page();
-    kprintf("Adress of B: %x\n",b);
-    pmm_free_page(b);
-    pmm_free_page(b);
-    uintptr_t d = pmm_allocate_page();
-    uintptr_t e = pmm_allocate_page();
-    kprintf("address of D: %x\n",d);
-    kprintf("address of e = %x\n",e);
-    
     vmm_init();
-    vmm_test_device_mapping();
-    uint64_t value = read_mair();
+
     while (1) {
     }
 }

@@ -1,15 +1,20 @@
 
 #include "pmm.h"
-#include "kprintf.h"
 #include <stddef.h>
 #include <stdint.h>
-
+#include "vmm.h"
 #define NORMAL_FLAGS  0x703ULL
 #define DEVICE_FLAGS 0x407ULL
 static uintptr_t page_table_l0;
 static uint64_t *l0;
+
 extern void setup_mair(void);
+extern void prepare_mmu(void);
+extern void setup_tcr(void);
 extern uint64_t read_mair(void);
+extern void setup_ttbr0(uintptr_t address);
+extern uint64_t read_ttbr0(void);
+extern void enable_mmu(void);
 
 void set_zero(uintptr_t table){
   uint64_t *entires = (uint64_t *) table;
@@ -28,11 +33,22 @@ uintptr_t give_page(void){
   return new;
 }
 void vmm_init(){
-   page_table_l0 = pmm_allocate_page();
-   if(page_table_l0 == 0) return;
-   l0 = (uint64_t *) page_table_l0;
-   set_zero(page_table_l0);
-   setup_mair();
+  page_table_l0 = pmm_allocate_page();
+  if(page_table_l0 == 0) return;
+  l0 = (uint64_t *) page_table_l0;
+  set_zero(page_table_l0);
+
+
+  map_region(0x40000000ULL,0x40000000ULL,0x08000000ULL,NORMAL_FLAGS); //map the entire RAM
+  map_page(0x09000000ULL, 0x09000000ULL, DEVICE_FLAGS); // UART
+  map_page(0x08000000ULL, 0x08000000ULL, DEVICE_FLAGS); // GIC distributor
+  map_page(0x08010000ULL, 0x08010000ULL, DEVICE_FLAGS); // GIC CPU interface
+                                                        //
+  setup_tcr();
+  setup_ttbr0(page_table_l0);                                                       //
+  setup_mair();
+  prepare_mmu();
+  enable_mmu();
 }
 
 uint64_t extract_l0(uintptr_t va){
@@ -64,10 +80,6 @@ uint64_t extract_offset(uintptr_t va){
   return va;
 }
 
-void remove_descriptor_bits(uintptr_t *entry){
-  *entry = *entry & (~0xFFFULL);
-  return;
-}
 void map_page(uintptr_t va, uintptr_t pa, uint64_t flags){
 
   if((pa & 0xFFFULL) != 0) return;
@@ -120,8 +132,6 @@ void map_region(uintptr_t va, uintptr_t pa, size_t size, uint64_t flags){
 
   while(size > 0){
 
-    kprintf("region: va=%x pa=%x size=%x\n",
-        va, pa, (uint64_t)size);
     map_page(va, pa,flags);
 
     va += 0x1000;
@@ -131,29 +141,3 @@ void map_region(uintptr_t va, uintptr_t pa, size_t size, uint64_t flags){
 
 }
 
-
-void vmm_test_device_mapping(void)
-{
-    uintptr_t va = 0x60000000ULL;
-    uintptr_t pa = 0x09000000ULL;   /* UART physical address */
-
-    map_page(va, pa, DEVICE_FLAGS);
-
-    uint64_t e0 = l0[extract_l0(va)];
-    uint64_t *t1 = (uint64_t *)(e0 & ~0xFFFULL);
-
-    uint64_t e1 = t1[extract_l1(va)];
-    uint64_t *t2 = (uint64_t *)(e1 & ~0xFFFULL);
-
-    uint64_t e2 = t2[extract_l2(va)];
-    uint64_t *t3 = (uint64_t *)(e2 & ~0xFFFULL);
-
-    uint64_t e3 = t3[extract_l3(va)];
-
-    kprintf("Device L3: %x\n", e3);
-
-    if (e3 == (pa | DEVICE_FLAGS))
-        kprintf("DEVICE MAPPING TEST PASSED\n");
-    else
-        kprintf("DEVICE MAPPING TEST FAILED\n");
-}
