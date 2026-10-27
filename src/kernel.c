@@ -1,4 +1,5 @@
 #include "gic.h"
+#include "kheap.h"
 #include "vmm.h"
 #include "pmm.h"
 #include "uart.h"
@@ -135,7 +136,16 @@ void kernel_main(void)
 
     pmm_init();
     vmm_init();
+    kheap_init(); 
+    uintptr_t a = kmalloc(13);
+    uintptr_t b = kmalloc(100);
+    uintptr_t c = kmalloc(200);
+    uintptr_t d = kmalloc(3700);
 
-    while (1) {
+    kprintf("A: %d\n", (void *)a);
+    kprintf("B: %d\n", (void *)b);
+    kprintf("C: %d\n", (void *)c);
+    kprintf("D: %d\n", (void *)d);
+      while (1) {
     }
 }
