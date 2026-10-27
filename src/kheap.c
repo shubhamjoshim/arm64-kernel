@@ -5,6 +5,7 @@
 #define PAGE_SIZE 0x1000UL
 
 static struct heap_block *heap_head;
+
 struct heap_block{
   size_t size;
   bool free;
@@ -12,6 +13,9 @@ struct heap_block{
 };
 
 typedef struct heap_block heap;
+
+static size_t header_size = sizeof(heap);
+ 
 void kheap_init(void){
   heap_head =(struct heap_block *) pmm_allocate_page(); 
   if(heap_head == 0) return;
@@ -72,6 +76,10 @@ uintptr_t kmalloc(size_t requested_size){
   }
   new_page -> free = false;
   return (uintptr_t) new_page + header_size;
+}
 
-
+void kfree(uintptr_t ptr){
+  if(ptr == 0) return;
+  heap *header_address =(heap *) (ptr - header_size);
+  header_address -> free = true;
 }
