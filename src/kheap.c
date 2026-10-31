@@ -15,6 +15,21 @@ struct heap_block{
 typedef struct heap_block heap;
 
 static size_t header_size = sizeof(heap);
+
+
+int canBeJoined(heap *current,size_t requested_size);
+void join_blocks(heap *current){
+
+  if(current == NULL) return;
+  if(current -> free != 1) return;
+  if(current -> next -> free != 1) return;
+
+  current -> size = current -> size + current -> next -> size + header_size;
+  current -> next = current -> next -> next;
+
+  return;
+}
+
  
 void kheap_init(void){
   heap_head =(struct heap_block *) pmm_allocate_page(); 
@@ -33,7 +48,7 @@ uintptr_t kmalloc(size_t requested_size){
   if(requested_size> (PAGE_SIZE - header_size)) return 0;
   if(heap_head == NULL) return 0;
 
-  requested_size = (requested_size + 7) & ~7UL;
+  requested_size = (requested_size + 7) & ~7UL; // padding it to the nearest power of 2
   heap *current = heap_head;
 
   while(current != NULL){
@@ -80,6 +95,48 @@ uintptr_t kmalloc(size_t requested_size){
 
 void kfree(uintptr_t ptr){
   if(ptr == 0) return;
-  heap *header_address =(heap *) (ptr - header_size);
-  header_address -> free = true;
+
+  heap *header = (heap *) (ptr - header_size);
+  header -> free = true;
+  heap *temp = heap_head;
+  heap *prev = NULL;
+
+  while(temp != NULL && temp != header){
+    prev = temp;
+    temp = temp -> next;
+  }
+
+  while (header -> next != NULL){
+    uintptr_t expected_next = (uintptr_t) header + header_size + header -> size;
+
+    if(!header -> next -> free) break;
+    if(expected_next != (uintptr_t)header -> next) break;
+    if(expected_next == (uintptr_t) header -> next){
+        header -> size = (header -> size + header -> next -> size + header_size);
+        header -> next = header -> next -> next;
+    }
+  }
+
+  if(prev != NULL && prev -> free){
+    uintptr_t expected_prev = (uintptr_t) header - prev -> size - header_size;
+
+    if((uintptr_t)prev == expected_prev){
+      prev -> size = prev -> size + header_size + header -> size;
+      prev -> next = header -> next;
+    }
+  }
+
+}
+
+
+
+int canBeJoined(heap *current, size_t requested_size){
+  if(current == NULL) return -1;
+  if(current -> free != 1 || current -> next -> free != 1) return -1;
+  
+  if(current -> size + current -> next -> size >= requested_size) return 1;
+
+  else {
+    return 0;
+  }
 }

@@ -138,18 +138,26 @@ void kernel_main(void)
     vmm_init();
     kheap_init(); 
 
+    uintptr_t a = kmalloc(100);
+uintptr_t b = kmalloc(100);
+uintptr_t c = kmalloc(100);
 
-  uintptr_t a = kmalloc(100);
-  uintptr_t b = kmalloc(100);
+kprintf("A: %x\n", a);
+kprintf("B: %x\n", b);
+kprintf("C: %x\n", c);
 
-  kfree(a);
+kfree(a);
+kfree(c);
+kfree(b);
 
-  uintptr_t c = kmalloc(50);
+uintptr_t d = kmalloc(300);
 
-  kprintf("A: %x\n", a);
-  kprintf("B: %x\n", b);
-  kprintf("C: %x\n", c);
+kprintf("D: %x\n", d);
 
+if (d == a)
+    kprintf("COALESCING TEST PASSED\n");
+else
+    kprintf("COALESCING TEST FAILED\n");
       while (1) {
     }
 }
