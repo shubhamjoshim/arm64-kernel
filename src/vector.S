@@ -18,8 +18,8 @@
     stp x20,x21, [sp,#160]
     stp x22,x23, [sp,#176]
     stp x24,x25, [sp,#192]
-    stp x26,x27, [sp,#216]
-    stp x28,x29, [sp,#232]
+    stp x26,x27, [sp,#208]
+    stp x28,x29, [sp,#224]
     str x30, [sp,#240]
 
     mrs x0, ELR_EL1 //same for system registers too
